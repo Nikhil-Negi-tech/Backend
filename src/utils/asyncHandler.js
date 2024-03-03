@@ -1,12 +1,35 @@
+// asyncHandler naam ka ek constant function define kiya gaya hai jo ek requestHandler function ko accept karta hai
 const asyncHandler = (requestHandler) => {
-    return (req,res,next)=>{
-        Promise.resolve(requestHandler(req,res,next)).catch((err) => next(err))
+    // asyncHandler ek naya function return karta hai jo req, res, aur next ko accept karta hai
+    return (req, res, next) => {
+        // requestHandler ko Promise.resolve ke through resolve kiya gaya hai, jisse ek Promise return hota hai
+        // agar koi error aata hai to usko catch karke next function ko call kiya jata hai
+        Promise.resolve(requestHandler(req, res, next)).catch((err) => next(err))
     }
 }
 
+// asyncHandler constant ko export kiya gaya hai
+export { asyncHandler }
 
 
-export {asyncHandler}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // const asyncHandler = (fn) => async (req,res,next) => {{
