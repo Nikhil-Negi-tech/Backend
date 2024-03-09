@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import{ User } from "../models/user.model.js"
-import{uploadOnCloudinary} from "../utils/cloudinary.js";
+import{uploadOnCloudinary,deleteFromCloudinary} from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { jwt } from "jsonwebtoken";
 
@@ -248,57 +248,60 @@ const updateAccountDetails = asyncHandler(async(req,res) => {
 })
 
 const updateUserAvatar = asyncHandler(async(req,res) => {
-    const avatarLocalPath = req.file?.avatar[0]?.path
-    if(!avatarLocalPath) {
-        throw new ApiError(400, "Avatar file is missing")
+    // Delete old avatar
+    if (req.user.avatar) {
+        await deleteFromCloudinary(req.user.avatar);
     }
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
-    if(!avatar.url) {
-        throw new ApiError(500, "Something went wrong while uploading avatar")
+
+    // Upload new avatar
+    const newAvatarLocalPath = req.file?.avatar[0]?.path;
+    if (!newAvatarLocalPath) {
+        throw new ApiError(400, "Avatar file is missing");
     }
-    const user = await User.findByIdAndUpdate(
-        req.user?._id,
-        {
-            $set: {
-                avatar: avatar.url
-            }
-        },
-        {
-            new: true
-        }
-    ).select("-password")
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, user, "Avatar updated successfully")
-    )
+    const newAvatar = await uploadOnCloudinary(newAvatarLocalPath);
+    if (!newAvatar.url) {
+        throw new ApiError(500, "Something went wrong while uploading avatar");
+    }
+
+    // Update user with new avatar
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        { $set: { avatar: newAvatar.url } },
+        { new: true }
+    ).select("-password");
+
+    return res.status(200).json(
+        new ApiResponse(200, updatedUser, "Avatar updated successfully")
+    );
+    
 })
 
 const updateUserCoverImage = asyncHandler(async(res,req)=>{
-    const coverImageLocalPath = req.file?.coverImage.path
-    if(!coverImageLocalPath){
-        throw new ApiError(400,"Cover Image is missing")
+    // Delete old cover image
+    if (req.user.coverImage) {
+        await deleteFromCloudinary(req.user.coverImage);
     }
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
-    if (!coverImage.url) {
-        throw new ApiError(500,"Something went wrong while uploading Cover Image")
+
+    // Upload new cover image
+    const newCoverImageLocalPath = req.file?.coverImage.path;
+    if (!newCoverImageLocalPath) {
+        throw new ApiError(400, "Cover image file is missing");
     }
-    const user = await User.findByIdAndUpdate(
-        req.user?._id,
-        {
-            $set:{
-                coverImage: coverImage.url
-            }
-        },
-        {
-            new: true
-        }
-    ).select("-password")
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,user,"Cover Image updated successfully")
-    )
+    const newCoverImage = await uploadOnCloudinary(newCoverImageLocalPath);
+    if (!newCoverImage.url) {
+        throw new ApiError(500, "Something went wrong while uploading cover image");
+    }
+
+    // Update user with new cover image
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        { $set: { coverImage: newCoverImage.url } },
+        { new: true }
+    ).select("-password");
+
+    return res.status(200).json(
+        new ApiResponse(200, updatedUser, "Cover image updated successfully")
+    );
 })
 
 
